@@ -25,6 +25,11 @@ dependencies = [
 rt = [
     "nearpy (>=0.9.0)"
 ]
+afg = [
+    "pyvisa (>=1.14.0)",
+    "pyvisa-py (>=0.7.0)",
+    "pyusb (>=1.2.1)",
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

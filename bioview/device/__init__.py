@@ -1,5 +1,6 @@
 from bioview.datatypes import ExperimentConfiguration
 
+from .afg import AfgConfiguration
 from .biopac import BiopacConfiguration
 from .usrp import MultiUsrpConfiguration, UsrpConfiguration
 
@@ -21,6 +22,10 @@ def get_device_object(
 ):
     if _check_type(config, MultiUsrpConfiguration):
         from .usrp import get_device_object
+
+        func = get_device_object
+    elif _check_type(config, AfgConfiguration):
+        from .afg import get_device_object
 
         func = get_device_object
     elif _check_type(config, BiopacConfiguration):
@@ -58,6 +63,13 @@ def discover_devices():
     except Exception as e:
         print(f"Error getting BIOPAC devices: {e}")
 
+    try:
+        from .afg import discover_devices
+
+        devices.extend(discover_devices())
+    except Exception as e:
+        print(f"Error getting AFG devices: {e}")
+
     return devices
 
 
@@ -65,6 +77,7 @@ __all__ = [
     "MultiUsrpConfiguration",
     "UsrpConfiguration",
     "BiopacConfiguration",
+    "AfgConfiguration",
     "get_device_object",
     "discover_devices",
 ]
