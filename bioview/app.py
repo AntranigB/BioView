@@ -22,6 +22,7 @@ from bioview.datatypes import (
 )
 from bioview.listeners import Client
 from bioview.ui import (
+    AfgDeviceConfigPanel,
     AnnotateEventPanel,
     AppControlPanel,
     DeviceStatusPanel,
@@ -153,6 +154,19 @@ class VisualizerClient(QMainWindow):
             self.usrp_config_panel[idx] = UsrpDeviceConfigPanel(cfg)
             experiment_layout.addWidget(self.usrp_config_panel[idx], stretch=1)
 
+        # AFG Function Generator Panel(s)
+        self.afg_config_panel = {}
+        for device_id, device_dict in self.devices.items():
+            if type(device_dict["config"]).__name__ == "AfgConfiguration":
+                panel = AfgDeviceConfigPanel(device_dict["config"])
+                panel.paramChanged.connect(
+                    lambda param, value, device_id=device_id: self.handle_afg_param_changed(
+                        device_id, param, value
+                    )
+                )
+                self.afg_config_panel[device_id] = panel
+                experiment_layout.addWidget(panel, stretch=1)
+
         controls_layout.addLayout(experiment_layout, stretch=4)
         top_layout.addLayout(controls_layout, stretch=3)
 
@@ -190,6 +204,8 @@ class VisualizerClient(QMainWindow):
         self.plot_grid.logEvent.connect(self.log_display_panel.log_message)
         for _, panel in enumerate(self.usrp_config_panel):
             panel.logEvent.connect(self.log_display_panel.log_message)
+        for panel in self.afg_config_panel.values():
+            panel.logEvent.connect(self.log_display_panel.log_message)
 
     def setup_client(self):
         """Connect to client"""
@@ -221,6 +237,14 @@ class VisualizerClient(QMainWindow):
         event.accept()
 
     # Handlers for UI updates
+    def handle_afg_param_changed(self, device_id, param, value):
+        # The local config is already updated by the panel; push to the instrument if live
+        if (
+            self.client_worker
+            and self.devices[device_id]["state"] == ConnectionStatus.CONNECTED
+        ):
+            self.client_worker.configure_device(device_id, {param: value})
+
     def handle_time_window_change(self, seconds):
         self.plot_grid.set_display_time(seconds)
 
